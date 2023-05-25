@@ -16,7 +16,15 @@ main :: proc() {
 	// SetTargetFPS(60)
 	is_running: bool = true;
 
-	init_boids()
+	if oop_ish
+	{
+		init_boids_oop()
+	}
+
+	if dop_ish
+	{
+		init_boids_dop()
+	}
 	flock := Rectangle{200, 20, 50, 50}
 	align := Rectangle{300, 20, 50, 50}
 	avoid := Rectangle{400, 20, 50, 50}
