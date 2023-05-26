@@ -21,6 +21,14 @@ should_flock : bool = true
 should_align : bool = true
 should_avoid : bool = true
 
+flock_X : f32
+flock_Y : f32
+
+align_X : f32
+align_Y : f32
+
+closeX : f32
+closeY : f32
 init_boids_oop :: proc()
 {
 	using rl
@@ -34,7 +42,7 @@ init_boids_oop :: proc()
 		boids[i].velocity.y = f32(GetRandomValue(-5, 5)) - .5
 		boids[i].rotation = 0
 
-		boids[i].color = C_GREEN
-		
+		// boids[i].color = C_GREEN
+		boids[i].color = Color { u8(GetRandomValue(100, 255)), u8(GetRandomValue(100, 255)), u8(GetRandomValue(100,255)), 255}		
 	}
 }

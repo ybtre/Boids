@@ -20,5 +20,4 @@ init_boids_dop :: proc()
 
 		boid_velocities[i].x = f32(GetRandomValue(-5, 5)) - .5
 		boid_velocities[i].y = f32(GetRandomValue(-5, 5)) - .5
-	}
-}
+	}}

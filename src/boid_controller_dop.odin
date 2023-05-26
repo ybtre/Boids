@@ -3,15 +3,20 @@ package main
 import fmt "core:fmt"
 import rl "vendor:raylib"
 import "core:math"
+import "core:time"
+
+counter := 0
 
 dop_ish_update :: proc()
 {
 	for i in 0..<MAX_BOIDS
 	{
+		// find_neighbors_dop();
+		
 		if should_flock
 		{
 			// flock(&boids[i], 100, flock_pow)
-			flock_dop()
+			flock_dop(i)
 		}
 		if should_align
 		{
@@ -32,9 +37,54 @@ dop_ish_update :: proc()
 	}
 }
 
-flock_dop :: proc()
+// find_neighbors_dop :: proc()
+// {
+// 	clear(&neighbors)
+// }
+
+flock_dop :: proc(ID : int)
+{	
+	using rl
+
+	clear(&neighbors_posistions)
+	for i in 0..<MAX_BOIDS
+	{
+		if boid_positions[ID] == boid_positions[i]
+		{
+			continue
+		}
+		d := get_dist_between_dop(ID, i)
+		if d < 100
+		{
+			append(&neighbors_posistions, boid_positions[i])
+		}
+
+		if len(neighbors_posistions) > 0
+		{
+			mean : Vector2
+			for p in neighbors_posistions
+			{
+				mean += p
+			}
+
+			mean.x = f32(mean.x / f32(len(neighbors_posistions)))
+			mean.y = f32(mean.y / f32(len(neighbors_posistions)))
+
+			dcx := mean.x - boid_positions[ID].x
+			dcy := mean.y - boid_positions[ID].y
+
+			boid_velocities[ID].x += dcx * flock_pow
+			boid_velocities[ID].y += dcy * flock_pow
+		}
+	}
+}
+
+get_dist_between_dop :: proc(CURR, OTHER : int) -> f32
 {
-	
+	d := boid_positions[OTHER] - boid_positions[CURR]
+	dist := f32(math.sqrt(d.x * d.x + d.y * d.y))
+
+	return dist
 }
 
 move_forward_dop :: proc(ID : int)
@@ -42,18 +92,11 @@ move_forward_dop :: proc(ID : int)
 	speed := math.sqrt(boid_velocities[ID].x * boid_velocities[ID].y + boid_velocities[ID].x * boid_velocities[ID].y)
 	if speed > 3
 	{
-		// x := boid_velocities[ID].x / speed * 3
 		boid_velocities[ID] = boid_velocities[ID].x / speed * 3
-		// y := boid_velocities[ID].y / speed * 3
 		boid_velocities[ID] = boid_velocities[ID].y / speed * 3
-		// boid_velocities[ID] = rl.Vector2{x, y}
 	}
 	else if speed < 1
 	{
-		// x := boid_velocities[ID].x / speed * 3
-		// y := boid_velocities[ID].y / speed * 3
-		// boid_velocities[ID].x = x
-		// boid_velocities[ID].y = y
 		boid_velocities[ID] = boid_velocities[ID].x / speed * 3
 		boid_velocities[ID] = boid_velocities[ID].y / speed * 3
 	}

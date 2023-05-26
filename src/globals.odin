@@ -1,6 +1,7 @@
 package main
 
 import rl "vendor:raylib"
+import "core:time"
 
 // PALLETE:
 //https://lospec.com/palette-list/moonlight-gb
@@ -14,3 +15,5 @@ C_GREEN             :: rl.Color{ 95, 199, 93, 255 }
 SCREEN 			:: rl.Vector2{ 1280, 1280 }
 PLAY_AREA 		:: 200
 project_name 	:: "Dirty Boids"
+
+// stopwatch : time.Stopwatch
