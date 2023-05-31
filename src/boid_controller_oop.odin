@@ -4,98 +4,139 @@ import fmt "core:fmt"
 import rl "vendor:raylib"
 import "core:math"
 
+counter_step : int = 0
+
 oop_ish_update :: proc() 
 {
 	timer += rl.GetFrameTime()
+	counter_step += 1
 
-	if timer > step
+	if counter_step % 2 == 0
 	{
-		for _, i in boids
+		if timer > step
 		{
-			// if should_flock
-			// {
-			// 	flock(&boids[i], 100, flock_pow)
-			// }
-			// if should_align
-			// {
-			// 	align(&boids[i], 40, align_pow)
-			// }
-			// if should_avoid
-			// {
-			// 	avoid(&boids[i], 10, avoid_pow)
-			// }
+			// for _, i in boids
+			for i in 0..<MAX_BOIDS/2
+			{
+				if should_flock
+				{
+					flock(&boids[i], 100, flock_pow)
+				}
+				if should_align
+				{
+					align(&boids[i], 40, align_pow)
+				}
+				if should_avoid
+				{
+					avoid(&boids[i], 10, avoid_pow)
+				}
 
-			all_rules(&boids[i])
+				// all_rules(&boids[i], 100, flock_pow, 40, align_pow, 10, avoid_pow)
 	
+				move_forward(&boids[i])
+				if wrap
+				{		
+					wrap_boids(&boids[i])
+				}
+			}
+			timer = 0
+		}
+	} else 
+	{
+		for i in MAX_BOIDS/2..<MAX_BOIDS
+		{
+			if should_flock
+			{
+				flock(&boids[i], 100, flock_pow)
+			}
+			if should_align
+			{
+				align(&boids[i], 40, align_pow)
+			}
+			if should_avoid
+			{
+				avoid(&boids[i], 10, avoid_pow)
+			}
+
+			// all_rules(&boids[i], 100, flock_pow, 40, align_pow, 10, avoid_pow)
+
 			move_forward(&boids[i])
 			if wrap
 			{		
 				wrap_boids(&boids[i])
 			}
-		}
-		timer = 0
+		}	
 	}
-	
 }
 
-all_rules :: proc(BOID : ^Boid)
+all_rules :: proc(BOID : ^Boid, DIST_FLOCK, POW_FLOCK, DIST_ALIGN, POW_ALIGN, DIST_AVOID, POW_AVOID : f32)
 {
-	clear(&neighbors)
-	for _, j in boids
-	{
-		if BOID^ == boids[j]
-		{
-			continue
-		}
-		t := get_dist_between(BOID^, boids[j])
-		if t < 150
-				{
-			append(&neighbors, boids[j])	
-		}
-	}
+    clear(&neighbors)
+    for _, j in boids
+    {
+        if BOID^ == boids[j]
+        {
+            continue
+        }
+        t := get_dist_between(BOID^, boids[j])
+        // if t < DIST_FLOCK || t < DIST_ALIGN || t < DIST_AVOID
+        if t < DIST_FLOCK
+        {
+            append(&neighbors, boids[j])	
+        }
+    }
 
-	if len(neighbors) > 0
-	{	
-		for n in neighbors
-		{
-			flock_X += n.position.x
-			flock_Y += n.position.y
-			
-			align_X += n.velocity.x
-			align_Y += n.velocity.y
-			
-			close := 10 - get_dist_between(BOID^, n)
-			closeX += (BOID.position.x - n.position.x) * close
-			closeY += (BOID.position.y - n.position.y) * close
-		}
-		// {// flock()
-			flock_X = f32(flock_X / f32(len(neighbors)))
-			flock_Y = f32(flock_Y / f32(len(neighbors)))
+    if len(neighbors) > 0
+    {
+        // Flock
+        meanX : f32
+        meanY : f32
+        for n in neighbors
+        {
+            meanX += n.position.x
+            meanY += n.position.y
+        }
+        meanX = f32(meanX / f32(len(neighbors)))
+        meanY = f32(meanY / f32(len(neighbors)))
 
-			dflock_x := flock_X - BOID.position.x
-			dflock_y := flock_Y - BOID.position.y
+        dcx := meanX - BOID.position.x
+        dcy := meanY - BOID.position.y
 
-			BOID.velocity.x += dflock_x * flock_pow
-			BOID.velocity.y += dflock_y * flock_pow
-		// }
+        BOID.velocity.x += dcx * POW_FLOCK
+        BOID.velocity.y += dcy * POW_FLOCK
+        
+        // Align
+        meanX = 0
+        meanY = 0
+        for n in neighbors
+        {
+            meanX += n.velocity.x
+            meanY += n.velocity.y
+        }
+        meanX = f32(meanX / f32(len(neighbors)))
+        meanY = f32(meanY / f32(len(neighbors)))
 
-		// {// align
-			align_X = f32(align_X / f32(len(neighbors)))
-			align_Y = f32(align_Y / f32(len(neighbors)))
+        dcx = meanX - BOID.velocity.x
+        dcy = meanY - BOID.velocity.y
 
-			dalign_x := align_X - BOID.velocity.x
-			dalign_y := align_Y - BOID.velocity.y
+        BOID.velocity.x += dcx * POW_ALIGN
+        BOID.velocity.y += dcy * POW_ALIGN
+        
+        // Avoid
+        closeX : f32
+        closeY : f32
+        for n in neighbors
+        {
+            close := DIST_AVOID - get_dist_between(BOID^, n)
+            closeX += (BOID.position.x - n.position.x) * close
+            closeY += (BOID.position.y - n.position.y) * close
+        }
 
-			BOID.velocity.x += dalign_x * align_pow
-			BOID.velocity.y += dalign_y * align_pow
-		// }
-
-		// {//aviod
-			BOID.velocity.x += closeX * avoid_pow
-			BOID.velocity.y += closeY * avoid_pow
-		// }
-	}
+        BOID.velocity.x += closeX * POW_AVOID
+        BOID.velocity.y += closeY * POW_AVOID
+    }
 }
+
 
 flock :: proc(BOID : ^Boid, DIST, POW : f32)
 {
